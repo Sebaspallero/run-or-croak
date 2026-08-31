@@ -2,48 +2,38 @@ package game.utils;
 
 import java.io.IOException;
 import java.net.URL;
-
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
-
+import javax.sound.sampled.*;
 
 public class SoundPlayer {
 
-    private Clip clip;
-    private final URL soundUrl[] = new URL[30];
+    public enum Sound { JUMP, COIN, GAME_OVER, MUSIC, HURT }
 
-    public SoundPlayer(){
-        soundUrl[0] = getClass().getResource("/resources/sfx/game-jump.wav");
-        soundUrl[1] = getClass().getResource("/resources/sfx/coin.wav");
-        soundUrl[2] = getClass().getResource("/resources/sfx/game-over.wav");
-        soundUrl[3] = getClass().getResource("/resources/sfx/background-music.wav");
-        soundUrl[4] = getClass().getResource("/resources/sfx/hurt.wav");
+    private Clip clip;
+    private final URL[] soundUrls = new URL[Sound.values().length];
+
+    public SoundPlayer() {
+        soundUrls[Sound.JUMP.ordinal()] = getClass().getResource("/resources/sfx/game-jump.wav");
+        soundUrls[Sound.COIN.ordinal()] = getClass().getResource("/resources/sfx/coin.wav");
+        soundUrls[Sound.GAME_OVER.ordinal()] = getClass().getResource("/resources/sfx/game-over.wav");
+        soundUrls[Sound.MUSIC.ordinal()] = getClass().getResource("/resources/sfx/background-music.wav");
+        soundUrls[Sound.HURT.ordinal()] = getClass().getResource("/resources/sfx/game-over.wav");
     }
 
-    public void setFile(int index){
-        if (index < 0 || index > soundUrl.length || soundUrl[index] == null) {
-            System.err.println("Error: Invalid index sound or file not found");
-        }
+    public void setFile(Sound sound) {
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(soundUrl[index]);
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(soundUrls[sound.ordinal()]);
             clip = AudioSystem.getClip();
             clip.open(audioInputStream);
-            
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
             System.err.println("Error: Could not upload the sound file " + e.getMessage());
         }
     }
-    
+
     public void play() {
         if (clip != null) {
-            if (clip.isRunning()) {
-                clip.stop();
-            }
-            clip.setFramePosition(0); 
-            clip.start();        
+            if (clip.isRunning()) clip.stop();
+            clip.setFramePosition(0);
+            clip.start();
         }
     }
 
@@ -51,26 +41,24 @@ public class SoundPlayer {
         if (clip != null) {
             clip.start();
             try {
-                while (!clip.isRunning()) {
-                    Thread.sleep(10);
-                }
-                while (clip.isRunning()) {
-                    Thread.sleep(10);
-                }
+                while (!clip.isRunning()) Thread.sleep(10);
+                while (clip.isRunning()) Thread.sleep(10);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
     }
 
-    public void loop(){
+    public void loop() {
         if (clip != null) {
             clip.loop(Clip.LOOP_CONTINUOUSLY);
         }
     }
 
-    public void stop(){
-        clip.stop();
-        clip.close(); 
+    public void stop() {
+        if (clip != null) {
+            clip.stop();
+            clip.close();
+        }
     }
 }

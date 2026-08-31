@@ -19,15 +19,23 @@ public class LivesManager {
         hearts.add(new Heart(THIRD, true));
     }
 
-    public void updateHeart(Character character) {
-        if (character.hasCollided()) {
-            for (int i = 2; i >= 0; i--) {
-                if (hearts.get(i).isFull()) {
-                    hearts.get(i).setFull(false);
-                    break;
-                }
+    public void updateHeart() {
+        for (int i = 2; i >= 0; i--) {
+            if (hearts.get(i).isFull()) {
+                hearts.get(i).setFull(false);
+                break;
             }
         }
+    }
+
+    public boolean heal() {
+        for (int i = 0; i < hearts.size(); i++) {
+            if (!hearts.get(i).isFull()) {
+                hearts.get(i).setFull(true);
+                return true; // Se curó un corazón
+            }
+        }
+        return false; // Ya tenía la vida al máximo
     }
 
     public boolean checkHearts() {

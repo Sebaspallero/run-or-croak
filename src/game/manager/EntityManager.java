@@ -1,77 +1,63 @@
 package game.manager;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-
+import java.util.concurrent.CopyOnWriteArrayList; // Importación clave
 import game.entities.AbstractEntity;
-import game.entities.EntityFactory;
 import game.entities.character.Character;
 import game.main.GamePanel;
 
 public class EntityManager {
+    // Usamos CopyOnWriteArrayList para que Swing pueda dibujarla sin errores de concurrencia
+    private List<AbstractEntity> entityList;
+    private long lastEntityTime;
+    private long initialEntityInterval;
+    private SpeedManager speedManager;
 
-    private List<AbstractEntity> entityList; // List of entities
-
-    private long lastEntityTime; // Time when the last obstacle was generated
-    private long entityInterval; // Interval for generating obstacles
-    private long initialEntityInterval; // Initial interval for generating obstacles
-    private long entityIncreaseInterval; // Interval for increasing the difficulty of obstacles
-    private long lastEntityDifficultyIncreaseTime; // Last time the difficulty of obstacles was adjusted
-
-    public EntityManager(GamePanel gp, Character character) {
-        this.entityList = new ArrayList<>();
-
+    public EntityManager(GamePanel gp, Character character, SpeedManager speedManager) {
+        this.entityList = new CopyOnWriteArrayList<>();
         this.lastEntityTime = System.currentTimeMillis();
         this.initialEntityInterval = 2000;
-        this.entityInterval = initialEntityInterval;
-        this.entityIncreaseInterval = 15000;
-        this.lastEntityDifficultyIncreaseTime = System.currentTimeMillis();
+        this.speedManager = speedManager;
     }
 
-    // Method to update obstacles and items
     public void update(double deltaTime, int currentSpeed, Character character) {
         long currentTime = System.currentTimeMillis();
+        long currentInterval = Math.max(900, initialEntityInterval - (currentSpeed));
 
-        // Generate new obstacles if the interval has passed
-        if (currentTime - lastEntityTime >= entityInterval) {
-            entityList.addAll(EntityFactory.createEntity());
+        if (currentTime - lastEntityTime >= currentInterval) {
+            boolean isHardMode = speedManager.isAtMaxSpeed();
+            PatternManager.spawnRandomPattern(entityList, isHardMode);
             lastEntityTime = currentTime;
         }
 
-        // Update obstacles
-        Iterator<AbstractEntity> entityIterator = entityList.iterator();
-        while (entityIterator.hasNext()) {
-            AbstractEntity entity = entityIterator.next();
+        List<AbstractEntity> newEntities = new ArrayList<>();
+        List<AbstractEntity> entitiesToRemove = new ArrayList<>(); // Lista temporal para borrar
+
+        for (AbstractEntity entity : entityList) {
             entity.update(deltaTime, currentSpeed);
+
+            // Si el Árbol escupió madera, la recogemos
+            AbstractEntity spawned = entity.getSpawnedEntity();
+            if (spawned != null) {
+                newEntities.add(spawned);
+            }
+
+            // Si salió de la pantalla, la marcamos para borrar
             if (entity.isOutOfScreen()) {
-                entityIterator.remove();
+                entitiesToRemove.add(entity);
             }
         }
 
-        // Increase the difficulty of obstacles and items
-        increaseDifficulty();
+        // Aplicamos los cambios al final para no romper la iteración y evitar crasheos
+        entityList.removeAll(entitiesToRemove);
+        entityList.addAll(newEntities);
     }
 
-    // Method to increase the difficulty of obstacles and items
-    private void increaseDifficulty() {
-        long currentTime = System.currentTimeMillis();
-
-        if (currentTime - lastEntityDifficultyIncreaseTime >= entityIncreaseInterval) {
-            entityInterval = Math.max(entityInterval - 250, 550);
-            lastEntityDifficultyIncreaseTime = currentTime;
-        }
-    }
-
-    // Method to reset obstacles and items
     public void resetEntities() {
         entityList.clear();
-        this.entityInterval = initialEntityInterval;
         this.lastEntityTime = System.currentTimeMillis();
     }
 
-    // Methods to get the lists of obstacles and items
-    public List<AbstractEntity> getEntityList() {
-        return entityList;
-    }
+    public List<AbstractEntity> getEntityList() { return entityList; }
 }

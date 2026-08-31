@@ -1,16 +1,11 @@
 package game.main;
 
 import java.awt.*;
-
+import javax.swing.JPanel;
 import game.UI.CharacterFrame;
-import game.UI.GameOverScreen;
 import game.UI.Heart;
-import game.UI.IntroScreen;
-import game.UI.TitleScreen;
 import game.entities.AbstractEntity;
 import game.entities.character.Character;
-import game.entities.items.AbstractItem;
-import game.entities.obstacles.AbstractObstacle;
 import game.entities.terrain.Background;
 import game.entities.terrain.Floor;
 import game.handlers.KeyHandler;
@@ -19,91 +14,68 @@ import game.manager.EntityManager;
 import game.manager.LivesManager;
 import game.manager.ScoreManager;
 import game.manager.SpeedManager;
-import game.utils.FontLoader;
+import game.manager.ResourceManager;
 import game.utils.SoundPlayer;
 import game.utils.TextGenerator;
-
-import javax.swing.JPanel;
+import game.states.GameState;
+import game.states.IntroState;
+import game.states.PlayingState;
 
 public class GamePanel extends JPanel implements Runnable {
 
-    //Game states
-    public enum GameState {
-        INTRO,
-        TITLE,
-        PLAYING,
-        GAME_OVER
-    }
-
-    //Atributes
-
+    // Componentes y Managers
     private Character character;
     private Floor floor;
     private Background background;
     private CharacterFrame characterFrame;
-
     private LivesManager livesManager;
     private ScoreManager scoreManager;
     private SpeedManager speedManager;
-    private CollisionManager collissionManager;
+    private CollisionManager collisionManager;
     private EntityManager entityManager;
-
-    private Font customBoldFont;
-    private Font customFont;
-
-    private boolean running;
-    private boolean gameOver;
-
-    private KeyHandler keyHandler;
     private SoundPlayer soundPlayer;
+    private KeyHandler keyHandler;
 
-    private int initialSpeed = 250;
-    private long speedIncreaseInterval = 15000;
-
-    private double deltaTime;
-    private long lastTime;
-
+    // Estado del juego
+    private GameState currentState;
+    private boolean running;
     private Thread gameThread;
 
-    private GameState gameState;
-    private long introStartTime;
-    private boolean showTitleOnce = true;
+    // Variables de tiempo y configuración
+    private double deltaTime;
+    private long lastTime;
+    private final int initialSpeed = 250;
+    private final long speedIncreaseInterval = 15000;
+    private Font customFont;
+    private Font customBoldFont;
 
-    //Constructor
+    public static boolean DEBUG_MODE = false;
 
     public GamePanel() {
         this.running = false;
 
-        this.gameState = GameState.INTRO;
-        this.introStartTime = System.currentTimeMillis();
-
+        // Inicializar entidades y gestores
         this.character = new Character(this);
         this.floor = new Floor();
         this.background = new Background();
         this.characterFrame = new CharacterFrame();
-
         this.scoreManager = new ScoreManager();
         this.livesManager = new LivesManager();
         this.speedManager = new SpeedManager(initialSpeed, speedIncreaseInterval);
-        this.collissionManager = new CollisionManager(new SoundPlayer(), livesManager, scoreManager);
-        this.entityManager = new EntityManager(this, character);
-
-        this.customBoldFont = FontLoader.loadFont("/resources/font/AvenuePixelStroke-Regular.ttf", 40f);
-        this.customFont = FontLoader.loadFont("/resources/font/AvenuePixel-Regular.ttf", 40f);
-
-        this.keyHandler = new KeyHandler(character, this);
         this.soundPlayer = new SoundPlayer();
+        this.collisionManager = new CollisionManager(soundPlayer, livesManager, scoreManager);
+        this.entityManager = new EntityManager(this, character, speedManager);
 
-        this.gameOver = false;
+        this.customFont = ResourceManager.getFont("/resources/font/AvenuePixel-Regular.ttf", 40f);
+        this.customBoldFont = ResourceManager.getFont("/resources/font/AvenuePixelStroke-Regular.ttf", 40f);
 
+        this.keyHandler = new KeyHandler(this);
         addKeyListener(keyHandler);
         setFocusable(true);
 
         this.lastTime = System.nanoTime();
-
+        this.currentState = new IntroState(this); // Estado inicial
     }
-
-    //Start the game for the first time
 
     public void startGame() {
         if (!running) {
@@ -111,174 +83,118 @@ public class GamePanel extends JPanel implements Runnable {
             if (gameThread == null) {
                 gameThread = new Thread(this);
                 gameThread.start();
-                soundPlayer.setFile(3);
+                soundPlayer.setFile(SoundPlayer.Sound.MUSIC);
                 soundPlayer.loop();
             }
         }
     }
 
-    //Restart the game after Game Over
     public void resetGame() {
-        this.running = false;
-
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        this.gameOver = false;
         this.entityManager.resetEntities();
         this.speedManager.resetSpeed(initialSpeed);
         this.scoreManager.resetScore();
         this.livesManager.resetHearts();
-        this.collissionManager.setHitStartTime(0);
+
         this.character = new Character(this);
         this.floor = new Floor();
         this.background = new Background();
 
-        this.keyHandler.setcharacter(character);
         this.lastTime = System.nanoTime();
-        this.gameState = showTitleOnce ? GameState.PLAYING : GameState.TITLE;
-
-        this.running = true;
-        new Thread(this).start();
-
-        repaint();
+        changeState(new PlayingState(this));
     }
 
     @Override
     public void run() {
-        while (running) {
-            long startTime = System.nanoTime(); // Start time to measure deltaTime
-            updateGame();
-            repaint();
+        final double TIME_PER_UPDATE = 1_000_000_000.0 / 60.0; // 60 Updates por segundo
+        long previousTime = System.nanoTime();
+        double accumulator = 0;
 
-            long elapsedTime = System.nanoTime() - startTime;
-            long sleepTime = Math.max(0, (16_666_667L - elapsedTime) / 1000000); // Aim for 60 FPS (16ms per frame)
-            try {
-                Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        while (running) {
+            long currentTime = System.nanoTime();
+            long elapsedTime = currentTime - previousTime;
+            previousTime = currentTime;
+            accumulator += elapsedTime;
+
+            // Fijamos el deltaTime para que las físicas sean consistentes (1/60 de segundo)
+            deltaTime = TIME_PER_UPDATE / 1_000_000_000.0;
+
+            boolean shouldRender = false;
+
+            // Actualizamos la lógica del juego en pasos fijos
+            while (accumulator >= TIME_PER_UPDATE) {
+                if (currentState != null) {
+                    currentState.update();
+                }
+                accumulator -= TIME_PER_UPDATE;
+                shouldRender = true; // Solo renderizamos si hubo una actualización de lógica
+            }
+
+            if (shouldRender) {
+                repaint();
+            } else {
+                // Pequeño descanso de 1ms para no usar el 100% de la CPU mientras esperamos
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
-    //Update the game changes in every loop
-
-    private void updateGame() {
-        if (!running) return;
-
-        getDeltaTime();
-
-        switch (gameState) {
-            case INTRO:
-                if (System.currentTimeMillis() - introStartTime >= 5000) {
-                    gameState = GameState.TITLE;
-                }
-                break;
-
-            case TITLE:
-                character.update();
-                background.update(deltaTime, 100);
-                break;
-
-            case PLAYING:
-                if (gameOver)
-                    return;
-
-                if (collissionManager.ischaracterHit(character)) {
-                    character.setCurrentState(Character.State.RUNNING);
-                }
-                speedManager.update();
-                character.update();
-                scoreManager.update();
-                floor.update(deltaTime, speedManager.getCurrentSpeed());
-                background.update(deltaTime, 100);
-                entityManager.update(deltaTime, speedManager.getCurrentSpeed(), character);
-                collissionManager.handleCollisions(character, entityManager.getEntityList());
-
-                if (livesManager.checkHearts()) {
-                    gameOver = true;
-                    gameState = GameState.GAME_OVER;
-                }
-                break;
-
-            case GAME_OVER:
-                break;
-        }
-    }
-
-    //Choose what to paint depending on the game state
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        switch (gameState) {
-            case INTRO:
-                IntroScreen.drawIntroScreen(g, customBoldFont, getWidth(), getHeight());
-                break;
-
-            case TITLE:
-                TitleScreen.drawTitleScreen(g, customFont, getWidth(), getHeight(), this, background, floor, character);
-                break;
-
-            case PLAYING:
-                drawGame(g);
-                break;
-
-            case GAME_OVER:
-                drawGame(g);
-                GameOverScreen.gameOverScreen(g, getWidth(), getHeight(), scoreManager.getScore(), this);
-                break;
+        if (currentState != null) {
+            currentState.draw(g);
         }
     }
 
-    //Draw the game on the screen
-
-    private void drawGame(Graphics g) {
+    // Método expuesto para dibujar los elementos genéricos en PLAYING o GAMEOVER
+    public void drawGameElements(Graphics g) {
         background.draw(g, getWidth(), getHeight());
         floor.draw(g);
         character.draw(g);
         characterFrame.draw(g);
 
+        if (DEBUG_MODE) character.getHitbox().draw(g);
+
         for (AbstractEntity entity : entityManager.getEntityList()) {
-            if (entity instanceof AbstractItem) {
-                entity.draw(g);
-            } else if (entity instanceof AbstractObstacle) {
-                entity.draw(g);
-            }
+            entity.draw(g);
+            if (DEBUG_MODE) entity.getHitbox().draw(g);
         }
 
         for (Heart heart : livesManager.getHearts()) {
             heart.draw(g);
         }
 
-        String score = "" + scoreManager.getScore();
+        // OPTIMIZACIÓN: Dibujar el puntaje directamente sin instanciar nuevos objetos
+        String score = String.valueOf(scoreManager.getScore());
+        g.setFont(customFont);
+        g.setColor(Color.WHITE);
         FontMetrics metrics = g.getFontMetrics(customBoldFont);
-        int textWidth = metrics.stringWidth(score);
-        int posX = (getWidth() - textWidth) / 2;
-        new TextGenerator(score, posX, 40, customFont, Color.WHITE).draw(g);
+        int posX = (getWidth() - metrics.stringWidth(score)) / 2;
+        g.drawString(score, posX, 40);
     }
 
-    //Helper methods and Getters - Setters
-
-    private void getDeltaTime() {
-        long now = System.nanoTime();
-        deltaTime = (now - lastTime) / 1000000000.0;
-        lastTime = now;
+    // --- State Management ---
+    public void changeState(GameState newState) {
+        this.currentState = newState;
     }
 
-    public boolean isGameOver() {
-        return gameOver;
+    public GameState getCurrentState() {
+        return currentState;
     }
 
-    public GameState getGameState() {
-        return gameState;
-    }
-
-    public void setGameState(GameState gameState) {
-        this.gameState = gameState;
-    }
+    // --- Getters para que los States accedan a la lógica ---
+    public Character getCharacter() { return character; }
+    public Background getGameBackground() { return background; }
+    public Floor getFloor() { return floor; }
+    public SpeedManager getSpeedManager() { return speedManager; }
+    public ScoreManager getScoreManager() { return scoreManager; }
+    public EntityManager getEntityManager() { return entityManager; }
+    public CollisionManager getCollisionManager() { return collisionManager; }
+    public LivesManager getLivesManager() { return livesManager; }
+    public SoundPlayer getSoundPlayer() { return soundPlayer; }
+    public double getDeltaTime() { return deltaTime; }
 }

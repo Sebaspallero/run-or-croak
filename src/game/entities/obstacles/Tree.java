@@ -3,91 +3,74 @@ package game.entities.obstacles;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
-
-import javax.imageio.ImageIO;
-
+import game.entities.AbstractEntity;
 import game.entities.Hitbox;
+import game.manager.ResourceManager;
 import game.utils.Animator;
 
 public class Tree extends AbstractObstacle {
-
-    private WoodProyectile proyectile;
     private boolean hasAttacked;
-    private State currentState;
+    private AbstractEntity pendingProjectile; // El proyectil que está a punto de escupir
     private Animator currentAnimator;
     private Animator attackAnimator;
     private Animator idleAnimator;
-    private static final int PROJECTILE_LAUNCH_FRAME = 8;
+    private static final int PROJECTILE_LAUNCH_FRAME = 6; // Lanza en el frame 6
 
-    public enum State {
-        IDLE,
-        ATTACK,
-        POST_ATTACK
-    }
+    public enum State { IDLE, ATTACK, POST_ATTACK }
+    private State currentState;
 
-    public Tree() {
-        super(800, 210, 64 * 2, 32 * 2, new Hitbox(800, 150, 30, 0));
+    public Tree(int x, int y) {
+        super(x, y, 128, 64, new Hitbox(40, 20, 50, 44));
         this.currentState = State.IDLE;
         this.hasAttacked = false;
 
-        try {
-            Image idleSprite = ImageIO.read(getClass().getResource("/resources/sprites/tree-idle.png"));
-            this.idleAnimator = new Animator(idleSprite, 64, 32, 18, 50, 0); // Configura para 8 frames, 150ms cada uno
+        Image idleSprite = ResourceManager.getImage("/resources/sprites/tree-idle.png");
+        Image attackSprite = ResourceManager.getImage("/resources/sprites/tree-attack.png");
 
-            Image attackSprite = ImageIO.read(getClass().getResource("/resources/sprites/tree-attack.png"));
-            this.attackAnimator = new Animator(attackSprite, 64, 32, 11, 80, 1); // Configura para 11 frames, 80ms cada
-                                                                                 
+        if (idleSprite != null && attackSprite != null) {
+            this.idleAnimator = new Animator(idleSprite, 64, 32, 18, 50, 0);
+            this.attackAnimator = new Animator(attackSprite, 64, 32, 11, 80, 1);
             this.currentAnimator = idleAnimator;
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
     @Override
     public void update(double deltaTime, int currentSpeed) {
-        x -= deltaTime * currentSpeed; 
+        x -= deltaTime * currentSpeed;
+
+        if (currentAnimator != null) {
+            currentAnimator.update();
+        }
+
         switch (currentState) {
             case IDLE:
-                if (!hasAttacked && x < 700) { // Attack when tree is in that position
+                // Ataca automáticamente cuando entra bien en la pantalla
+                if (!hasAttacked && x < 650) {
                     setCurrentState(State.ATTACK);
                 }
                 break;
-
             case ATTACK:
-                currentAnimator.update(); // update animation of attack
-                if (attackAnimator.getCurrentFrame() >= PROJECTILE_LAUNCH_FRAME && proyectile == null) {
-                    proyectile = new WoodProyectile(this); 
+                if (attackAnimator.getCurrentFrame() == PROJECTILE_LAUNCH_FRAME && !hasAttacked) {
+                    // Preparamos el proyectil y lo guardamos
+                    pendingProjectile = new WoodProyectile(this.x, this.y + 25);
+                    hasAttacked = true;
                 }
-                if (proyectile != null) {
-                    proyectile.update(deltaTime, currentSpeed); // update proyectile
-                    if (proyectile.isOutOfScreen()) {
-                        setCurrentState(State.POST_ATTACK);
-                    }
-                }
-
-                // check if attack animation is over
                 if (attackAnimator.isAnimationComplete()) {
-                    // if yes, then change state
                     setCurrentState(State.POST_ATTACK);
                 }
                 break;
-
             case POST_ATTACK:
-                // Transición de vuelta a IDLE si necesario
-                if (x < -width) { // Cuando el árbol sale de la pantalla
-                    setCurrentState(State.IDLE);
-                }
-                break;
+                break; // Se queda quieto hasta salir de la pantalla
         }
+        hitbox.update(this.x, this.y);
+    }
 
-        //update proyectile despite the tree state
-        if (proyectile != null) {
-            proyectile.update(deltaTime, currentSpeed);
-        }
-
-        hitbox.update(x + 45, y + 20);
-
+    // El EntityManager llamará a este método para extraer el proyectil
+    @Override
+    public AbstractEntity getSpawnedEntity() {
+        AbstractEntity temp = pendingProjectile;
+        pendingProjectile = null; // Lo vaciamos para no escupirlo dos veces
+        return temp;
     }
 
     @Override
@@ -95,34 +78,19 @@ public class Tree extends AbstractObstacle {
         if (currentAnimator != null) {
             currentAnimator.draw(g, x, y, width, height);
         } else {
-            g.setColor(Color.BLUE);
+            g.setColor(new Color(139, 69, 19)); // Color marrón
             g.fillRect(x, y, width, height);
         }
-
-        if (proyectile != null) {
-            proyectile.draw(g);
-        }
-
-        /* hitbox.draw(g); */
     }
 
-    public void setCurrentState(State newState) {
+    private void setCurrentState(State newState) {
         this.currentState = newState;
-
-        switch (newState) {
-            case IDLE:
-                currentAnimator = idleAnimator;
-                currentAnimator.reset();
-                break;
-            case ATTACK:
-                currentAnimator = attackAnimator;
-                currentAnimator.reset();
-                break;
-            case POST_ATTACK:
-                currentAnimator = idleAnimator;
-                currentAnimator.reset();
-                break;
+        if (newState == State.ATTACK) {
+            currentAnimator = attackAnimator;
+            currentAnimator.reset();
+        } else if (newState == State.POST_ATTACK) {
+            currentAnimator = idleAnimator;
+            currentAnimator.reset();
         }
     }
-
 }

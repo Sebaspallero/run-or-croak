@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 
 import game.entities.Hitbox;
 import game.entities.character.Character;
+import game.manager.ResourceManager;
 import game.utils.Animator;
 
 public class Bee extends AbstractObstacle {
@@ -18,7 +19,7 @@ public class Bee extends AbstractObstacle {
     private Animator animator;
 
     public Bee(int startX, int minY, int maxY) {
-        super(startX, 0, 36 * 2, 34 * 2, new Hitbox(startX, 0, 50, 35));
+        super(startX, 0, 72, 68, new Hitbox(11, 16, 50, 35));
 
         Random random = new Random();
 
@@ -30,11 +31,9 @@ public class Bee extends AbstractObstacle {
         // Initial random direction (1 for down, -1 for up)
         this.directionY = random.nextBoolean() ? 1 : -1;
 
-        try {
-            Image sprite = ImageIO.read(getClass().getResource("/resources/sprites/bee-idle.png"));
-            this.animator = new Animator(sprite, 36, 34, 6, 100, 0); // Frame and speed settings
-        } catch (Exception e) {
-            e.printStackTrace();
+        Image beeSpriteSheet = ResourceManager.getImage("/resources/sprites/bee-idle.png");
+        if (beeSpriteSheet != null) {
+            this.animator = new Animator(beeSpriteSheet,  36, 34, 6, 100, 0);
         }
     }
 
@@ -85,14 +84,13 @@ public class Bee extends AbstractObstacle {
             g.setColor(Color.YELLOW);
             g.fillOval(x, y, width, height);
         }
-        // Draw the hitbox (optional, for debugging)
-        /* hitbox.draw(g); */
     }
 
     @Override
     public void update(double deltaTime, int currentSpeed) {
         // Delegate to the version with character
         update(deltaTime, currentSpeed, null);
+        hitbox.update(this.x, this.y);
     }
 
 }

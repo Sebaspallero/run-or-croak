@@ -26,7 +26,7 @@ public class Cherry extends AbstractItem {
     }
 
     public Cherry(int x, int y) {
-        super(x, y, 64, 64, new Hitbox(800, 150, 28, 28));
+        super(x, y, 64, 64, new Hitbox(18, 18, 28, 28));
         this.animator = new Animator(idleSprite, 64, 64, 17, 80, 0); // Configura el Animator
 
     }

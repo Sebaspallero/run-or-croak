@@ -6,14 +6,14 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 
 import game.main.GamePanel;
-import game.utils.FontLoader;
 import game.utils.TextGenerator;
+import game.manager.ResourceManager;
 
 public class GameOverScreen {
 
     public static void gameOverScreen(Graphics g, int width, int height, int score, GamePanel gp) {
-        Font customFont = FontLoader.loadFont("/resources/font/AvenuePixel-Regular.ttf", 40f);
-        Font customBoldFont = FontLoader.loadFont("/resources/font/AvenuePixelStroke-Regular.ttf", 70f);
+        Font customFont = ResourceManager.getFont("/resources/font/AvenuePixel-Regular.ttf", 40f);
+        Font customBoldFont = ResourceManager.getFont("/resources/font/AvenuePixelStroke-Regular.ttf", 70f);
 
         FontMetrics metrics = g.getFontMetrics(customBoldFont);
 

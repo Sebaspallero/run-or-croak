@@ -18,7 +18,7 @@ public abstract class AbstractEntity {
         this.y = y;
         this.width = width;
         this.height = height;
-        this.hitbox = new Hitbox(x, y, width, height);
+        this.hitbox = new Hitbox(0, 0, width, height);
     }
 
     public abstract void update(double deltaTime, int currentSpeed);
@@ -47,5 +47,9 @@ public abstract class AbstractEntity {
 
     public void setCurrentState(State newState) {
         this.currentState = newState;
+    }
+
+    public AbstractEntity getSpawnedEntity() {
+        return null; // Por defecto las entidades no generan otras entidades
     }
 }

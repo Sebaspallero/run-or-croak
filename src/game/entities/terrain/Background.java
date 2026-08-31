@@ -1,5 +1,8 @@
 package game.entities.terrain;
 
+import game.manager.ResourceManager;
+import game.utils.Animator;
+
 import java.awt.*;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -14,13 +17,9 @@ public class Background {
     public Background() {
         this.offsetY = 0;
 
-        try {
-            image = ImageIO.read(getClass().getResource("/resources/sprites/background-001.png"));
-            imageWidth = image.getWidth(null);
-            imageHeight = image.getHeight(null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        image = ResourceManager.getImage("/resources/sprites/background-001.png");
+        imageWidth = image.getWidth(null);
+        imageHeight = image.getHeight(null);
     }
 
     // Update the vertical offset for upward scrolling

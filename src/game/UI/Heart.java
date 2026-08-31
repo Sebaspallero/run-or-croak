@@ -1,5 +1,7 @@
 package game.UI;
 
+import game.manager.ResourceManager;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -27,9 +29,9 @@ public class Heart {
     public void initializeHeartImage() {
         try {
             if (isFull) {
-                heart = ImageIO.read(getClass().getResource("/resources/sprites/full-heart.png"));
+                heart = ResourceManager.getImage("/resources/sprites/full-heart.png");;
             } else {
-                heart = ImageIO.read(getClass().getResource("/resources/sprites/empty-heart.png"));
+                heart = ResourceManager.getImage("/resources/sprites/empty-heart.png");
             }
         } catch (Exception e) {
             e.printStackTrace();

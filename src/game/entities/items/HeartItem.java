@@ -1,23 +1,18 @@
-package game.entities.obstacles;
+package game.entities.items;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
-
-import javax.imageio.ImageIO;
-
 import game.entities.Hitbox;
 import game.manager.ResourceManager;
-import game.utils.Animator;
 
-public class Spike extends AbstractObstacle {
-
+public class HeartItem extends AbstractItem {
     private Image image;
 
-    public Spike(int x, int y) {
-        super(x, y, 48, 48, new Hitbox(13, 8, 22, 40));
-        image = ResourceManager.getImage("/resources/sprites/spikes-001.png");
-
+    public HeartItem(int x, int y) {
+        // Un ítem pequeño y valioso en el aire
+        super(x, y, 32, 32, new Hitbox(0, 0, 32, 32));
+        image = ResourceManager.getImage("/resources/sprites/full-heart.png");
     }
 
     @Override
@@ -31,9 +26,8 @@ public class Spike extends AbstractObstacle {
         if (image != null) {
             g.drawImage(image, x, y, width, height, null);
         } else {
-            g.setColor(Color.BLUE);
-            g.fillRect(x, y, width, height);
+            g.setColor(Color.RED);
+            g.fillOval(x, y, width, height);
         }
     }
-
 }

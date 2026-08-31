@@ -7,6 +7,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import game.main.Game;
+import game.manager.ResourceManager;
 
 public class Floor {
 
@@ -20,12 +21,7 @@ public class Floor {
         this.height = 60 * 2;
         this.x = 0;
         this.y = Game.SCREEN_HEIGHT - 120;
-
-        try {
-            image = ImageIO.read(getClass().getResource("/resources/sprites/floor-001.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        image = ResourceManager.getImage("/resources/sprites/floor-001.png");
     }
 
     public void update(double deltaTime, int currentSpeed) {

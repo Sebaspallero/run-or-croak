@@ -7,19 +7,17 @@ import java.awt.Image;
 import javax.imageio.ImageIO;
 
 import game.entities.Hitbox;
+import game.manager.ResourceManager;
 import game.utils.Animator;
 
 public class Pig extends AbstractObstacle {
     private Animator animator;
 
-    public Pig() {
-        super(800, 210, 36 * 2, 30 * 2, new Hitbox(800, 150, 35, 35));
-
-        try {
-            Image birdSpriteSheet = ImageIO.read(getClass().getResource("/resources/sprites/pig-run.png"));
-            this.animator = new Animator(birdSpriteSheet, 36, 30, 12, 50, 0); // Configura el Animator
-        } catch (Exception e) {
-            e.printStackTrace();
+    public Pig(int x, int y) {
+        super(x, y, 72, 60, new Hitbox(18, 20, 36, 35));
+        Image pigSpriteSheet = ResourceManager.getImage("/resources/sprites/pig-run.png");
+        if (pigSpriteSheet != null) {
+            this.animator = new Animator(pigSpriteSheet, 36, 30, 12, 50, 0);
         }
     }
 
@@ -29,7 +27,7 @@ public class Pig extends AbstractObstacle {
         if (animator != null) {
             animator.update();
         }
-        hitbox.update(x + 20, y + 10);
+        hitbox.update(this.x, this.y);
     }
 
     @Override

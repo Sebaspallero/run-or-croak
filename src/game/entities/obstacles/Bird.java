@@ -7,40 +7,32 @@ import java.awt.Image;
 import javax.imageio.ImageIO;
 
 import game.entities.Hitbox;
+import game.manager.ResourceManager;
 import game.utils.Animator;
 
 public class Bird extends AbstractObstacle {
     private Animator animator;
 
-    public Bird() {
-        super(800, 180, 64, 64, new Hitbox(800, 150, 28, 28));
+    public Bird(int x, int y) {
+        super(x, y, 64, 64, new Hitbox(16, 16, 32, 32));
 
-        try {
-            Image birdSpriteSheet = ImageIO.read(getClass().getResource("/resources/sprites/blue-bird.png"));
-            this.animator = new Animator(birdSpriteSheet, 32, 32, 9, 50, 0); // Configura el Animator
-        } catch (Exception e) {
-            e.printStackTrace();
+        Image birdSpriteSheet = ResourceManager.getImage("/resources/sprites/blue-bird.png");
+        if (birdSpriteSheet != null) {
+            this.animator = new Animator(birdSpriteSheet, 32, 32, 9, 50, 0);
         }
     }
 
     @Override
     public void update(double deltaTime, int currentSpeed) {
         x -= deltaTime * currentSpeed;
-        if (animator != null) {
-            animator.update();
-        }
-        hitbox.update(x + 20, y + 20);
+        if (animator != null) animator.update();
+
+        hitbox.update(this.x, this.y);
     }
 
     @Override
     public void draw(Graphics g) {
-        if (animator != null) {
-            animator.draw(g, x, y, width, height);
-            /* hitbox.draw(g); */
-        } else {
-            g.setColor(Color.BLUE);
-            g.fillRect(x, y, width, height);
-        }
+        if (animator != null) animator.draw(g, x, y, width, height);
     }
 
 }
