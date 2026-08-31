@@ -4,11 +4,9 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 
-import javax.imageio.ImageIO;
 
 import game.entities.Hitbox;
 import game.manager.ResourceManager;
-import game.utils.Animator;
 
 public class Spike extends AbstractObstacle {
 

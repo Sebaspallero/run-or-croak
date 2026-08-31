@@ -3,6 +3,7 @@ package game.states;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import game.main.GamePanel;
+import game.UI.SoundToggle;
 import game.entities.character.Character;
 import game.utils.SoundPlayer;
 
@@ -60,6 +61,15 @@ public class PlayingState implements GameState {
         if (keyCode == KeyEvent.VK_P || keyCode == KeyEvent.VK_ESCAPE) {
             // Cambiamos al estado de pausa y le pasamos "this" (el PlayingState actual) para que no se pierda
             gp.changeState(new PauseState(gp, this));
+        }
+
+        // SILENCIAR MÚSICA
+        if (keyCode == KeyEvent.VK_O) {
+            SoundToggle  st = gp.getSoundToggle();
+            SoundPlayer mp = gp.getMusicPlayer();
+            mp.toggleMute();
+            st.toggleSound();
+            
         }
     }
 

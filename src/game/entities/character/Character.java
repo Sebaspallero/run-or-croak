@@ -15,7 +15,6 @@ public class Character {
     private static final int GROUND_Y = 210;
     private static final double GRAVITY = 1;
     private static final int JUMP_STRENGTH = -17;
-    private static final int HITBOX_OFFSET_X = 15;
     private static final long INVULNERABILITY_DURATION = 1500; // 1.5 segundos de invulnerabilidad
 
     private int x, y, width, height, velocityY;

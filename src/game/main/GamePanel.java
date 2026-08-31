@@ -4,6 +4,7 @@ import java.awt.*;
 import javax.swing.JPanel;
 import game.UI.CharacterFrame;
 import game.UI.Heart;
+import game.UI.SoundToggle;
 import game.entities.AbstractEntity;
 import game.entities.character.Character;
 import game.entities.terrain.Background;
@@ -16,7 +17,6 @@ import game.manager.ScoreManager;
 import game.manager.SpeedManager;
 import game.manager.ResourceManager;
 import game.utils.SoundPlayer;
-import game.utils.TextGenerator;
 import game.states.GameState;
 import game.states.IntroState;
 import game.states.PlayingState;
@@ -35,6 +35,8 @@ public class GamePanel extends JPanel implements Runnable {
     private EntityManager entityManager;
     private SoundPlayer soundPlayer;
     private KeyHandler keyHandler;
+    private SoundToggle soundToggle;
+    private SoundPlayer musicPlayer;
 
     // Estado del juego
     private GameState currentState;
@@ -63,8 +65,10 @@ public class GamePanel extends JPanel implements Runnable {
         this.livesManager = new LivesManager();
         this.speedManager = new SpeedManager(initialSpeed, speedIncreaseInterval);
         this.soundPlayer = new SoundPlayer();
+        this.musicPlayer = new SoundPlayer();
         this.collisionManager = new CollisionManager(soundPlayer, livesManager, scoreManager);
         this.entityManager = new EntityManager(this, character, speedManager);
+        this.soundToggle = new SoundToggle();
 
         this.customFont = ResourceManager.getFont("/resources/font/AvenuePixel-Regular.ttf", 40f);
         this.customBoldFont = ResourceManager.getFont("/resources/font/AvenuePixelStroke-Regular.ttf", 40f);
@@ -83,8 +87,8 @@ public class GamePanel extends JPanel implements Runnable {
             if (gameThread == null) {
                 gameThread = new Thread(this);
                 gameThread.start();
-                soundPlayer.setFile(SoundPlayer.Sound.MUSIC);
-                soundPlayer.loop();
+                musicPlayer.setFile(SoundPlayer.Sound.MUSIC);
+                musicPlayer.loop();
             }
         }
     }
@@ -156,6 +160,7 @@ public class GamePanel extends JPanel implements Runnable {
         floor.draw(g);
         character.draw(g);
         characterFrame.draw(g);
+        soundToggle.draw(g);
 
         if (DEBUG_MODE) character.getHitbox().draw(g);
 
@@ -197,4 +202,6 @@ public class GamePanel extends JPanel implements Runnable {
     public LivesManager getLivesManager() { return livesManager; }
     public SoundPlayer getSoundPlayer() { return soundPlayer; }
     public double getDeltaTime() { return deltaTime; }
+    public SoundToggle getSoundToggle() {return this.soundToggle;}
+    public SoundPlayer getMusicPlayer() {return this.musicPlayer;}
 }

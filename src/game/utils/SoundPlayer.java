@@ -10,6 +10,7 @@ public class SoundPlayer {
 
     private Clip clip;
     private final URL[] soundUrls = new URL[Sound.values().length];
+    private boolean isMuted = false;
 
     public SoundPlayer() {
         soundUrls[Sound.JUMP.ordinal()] = getClass().getResource("/resources/sfx/game-jump.wav");
@@ -30,7 +31,7 @@ public class SoundPlayer {
     }
 
     public void play() {
-        if (clip != null) {
+        if (clip != null && !isMuted) {
             if (clip.isRunning()) clip.stop();
             clip.setFramePosition(0);
             clip.start();
@@ -50,8 +51,21 @@ public class SoundPlayer {
     }
 
     public void loop() {
-        if (clip != null) {
+        // Solo inicia el bucle si no está silenciado
+        if (clip != null && !isMuted) {
             clip.loop(Clip.LOOP_CONTINUOUSLY);
+        }
+    }
+
+   public void toggleMute() {
+        isMuted = !isMuted; // Cambiamos el estado
+        
+        if (clip != null) {
+            if (isMuted) {
+                clip.stop(); // Pausa la reproducción
+            } else {
+                clip.loop(Clip.LOOP_CONTINUOUSLY); // Reanuda y asegura el bucle infinito
+            }
         }
     }
 

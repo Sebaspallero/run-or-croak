@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.util.Random;
 
-import javax.imageio.ImageIO;
 
 import game.entities.Hitbox;
 import game.entities.character.Character;

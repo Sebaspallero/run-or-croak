@@ -1,11 +1,8 @@
 package game.entities.terrain;
 
 import game.manager.ResourceManager;
-import game.utils.Animator;
 
 import java.awt.*;
-import java.io.IOException;
-import javax.imageio.ImageIO;
 
 public class Background {
 

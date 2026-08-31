@@ -6,8 +6,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 
-import javax.imageio.ImageIO;
-
 public class Heart {
     private int width;
     private int height;

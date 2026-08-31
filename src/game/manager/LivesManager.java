@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import game.UI.Heart;
-import game.entities.character.Character;
 
 public class LivesManager {
 

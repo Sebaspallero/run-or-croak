@@ -26,7 +26,7 @@ public class PatternManager {
 
         // 2. Si no hubo suerte con el corazón, generamos un patrón de obstáculos
         // Asumiendo 7 patrones normales (0-6) y 4 difíciles adicionales (7-10)
-        int maxPatterns = isHardMode ? 11 : 7;
+        int maxPatterns = isHardMode ? 12 : 8;
         int pattern = RANDOM.nextInt(maxPatterns);
 
         switch (pattern) {
@@ -37,13 +37,14 @@ public class PatternManager {
             case 3: spawnBirdAndCherries(entities); break;
             case 4: spawnCherryArc(entities); break;
             case 5: spawnMultiplePigs(entities); break;
-            case 6: spawnTreeObstacle(entities); break; // <-- El árbol es un patrón normal
+            case 6: spawnTreeObstacle(entities); break;
+            case 7: spawnDoubleSpike(entities); break; // <-- El árbol es un patrón normal
 
             // --- PATRONES DIFÍCILES (Solo a máxima velocidad) ---
-            case 7: spawnSpikeAndBird(entities); break;
-            case 8: spawnDoubleThreat(entities); break;
-            case 9: spawnPigCherryPig(entities); break;
-            case 10: spawnLowBirdWave(entities); break;
+            case 8: spawnSpikeAndBird(entities); break;
+            case 9: spawnDoubleThreat(entities); break;
+            case 10: spawnPigCherryPig(entities); break;
+            case 11: spawnLowBirdWave(entities); break;
         }
     }
 

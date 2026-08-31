@@ -2,9 +2,6 @@ package game.entities.terrain;
 
 import java.awt.Graphics;
 import java.awt.Image;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
 
 import game.main.Game;
 import game.manager.ResourceManager;
